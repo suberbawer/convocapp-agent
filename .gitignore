@@ -1,0 +1,6 @@
+.vscode
+__pycache__/
+.env*
+logs
+.DS_Store
+convocapp_agent/main.py
