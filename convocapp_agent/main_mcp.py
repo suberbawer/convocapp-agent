@@ -1,12 +1,13 @@
+import json
+
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP, Context
 from mcp.types import TextContent
 from convocapp_agent.clients.studio import StudioClient, studio as studio_client
+from convocapp_agent.models.mcp_models import LLMClassifyResponse
 from model_router import call_model
 from prompts.prompt_builder import render_prompt
-
-import datetime
 
 load_dotenv()
 
@@ -31,8 +32,8 @@ mcp = FastMCP("convocapp-agent", version="0.1.0", lifespan=lifespan, port=8000)
     description="Classifies user intent and suggests tool usage",
 )
 async def classify_action_match(ctx: Context, user_input: str) -> list[TextContent]:
-    prompt = render_prompt("classify_action_match.txt.tmpl", user_input=user_input)
-    raw_response = call_model(prompt, task="classification")
+    prompt = render_prompt("classify_and_extract.txt.tmpl", user_input=user_input)
+    raw_response = call_model(prompt, "classify_action_match")
     studio: StudioClient = ctx.request_context.lifespan_context["studio"]
 
     reasoning = [
@@ -41,28 +42,23 @@ async def classify_action_match(ctx: Context, user_input: str) -> list[TextConte
         f"Model returned: {raw_response.strip()}",
     ]
 
-    tool_name = None
-    if "1" in raw_response:
-        tool_name = "create_match"
-    elif "2" in raw_response:
-        tool_name = "get_match_info"
-    elif "3" in raw_response:
-        tool_name = "add_players"
-    elif "4" in raw_response:
-        tool_name = "edit_match"
-
+    parsed = LLMClassifyResponse.model_validate(json.loads(raw_response.strip()))
+    tool_name = parsed.tool_call.name if parsed.tool_call else None
     if tool_name:
         result = f"Intent detected. Tool to call: {tool_name}."
         reasoning.append(f"Mapped intent to tool: {tool_name}")
 
         if tool_name == "create_match":
-            result = await studio.create_match(datetime.datetime.now(), "Alliance Arena Stadium")
+            result = await studio.create_match(**parsed.tool_call.parameters)
             print("RESULT", result)
     else:
-        result = "I'm not sure how to help with that. Please try rephrasing."
-        reasoning.append("No matching tool found")
+        # result = "I'm not sure how to help with that. Please try rephrasing."
+        result = parsed.response
+        reasoning.append("No matching tool found, answering question")
 
-    return [TextContent(type="text", text=f"{result}\n\nReasoning:\n" + "\n".join(reasoning))]
+    print("Reasoning =====>", reasoning)
+
+    return [TextContent(type="text", text=result)]
 
 
 if __name__ == "__main__":

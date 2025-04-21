@@ -1,9 +1,10 @@
 import os
 import streamlit as st
-import requests
-import json
 
 from dotenv import load_dotenv
+
+from convocapp_agent.model_router import call_model
+from convocapp_agent.prompts.prompt_builder import render_prompt
 
 st.set_page_config(page_title="⚽ Match Agent Chat", layout="centered")
 
@@ -31,7 +32,7 @@ if user_input:
     payload = {
         "context": {
             "messages": [{"role": "user", "content": user_input}],
-            "task": "classification",
+            "task": "classify_action_match",
             "metadata": {},
         }
     }
@@ -39,18 +40,13 @@ if user_input:
     # Call match-agent
     try:
         with st.spinner("Thinking..."):
-            response = requests.post(f"{base_url}/classify", json=payload)
-            result = response.json()
+            prompt = render_prompt("classify_and_extract.txt.tmpl", user_input=user_input)
+            result = call_model(prompt, "classify_action_match")
 
-        # Format agent response
-        agent_reply = f"**Intent**: `{result['intent']}`\n\n"
-        agent_reply += f"**Args**: ```json\n{json.dumps(result['args'], indent=2)}\n```\n"
-        agent_reply += f"**Confidence**: `{result.get('confidence', 'N/A')}`"
-
-        st.session_state.chat_history.append({"role": "assistant", "content": agent_reply})
+        st.session_state.chat_history.append({"role": "assistant", "content": result})
 
         with st.chat_message("assistant"):
-            st.markdown(agent_reply)
+            st.markdown(result)
 
     except Exception as e:
         st.error(f"❌ Error: {e}")

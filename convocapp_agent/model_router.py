@@ -7,7 +7,7 @@ def call_model(prompt: str, task: str, complexity: str = "low") -> str:
     print("Calling AI model...", url)
     payload = {"text": prompt, "complexity": complexity, "chat_mode": True}
     try:
-        response = requests.post(url, json=payload, timeout=5)
+        response = requests.post(url, json=payload)  # timeout=60
         response.raise_for_status()
         return response.json()["response"]
     except requests.RequestException as e:

@@ -38,7 +38,7 @@ class StudioClient:
                 else:
                     # Wait, but with timeout to detect stuck connections
                     try:
-                        await asyncio.wait_for(self._connected.wait(), timeout=5)
+                        await asyncio.wait_for(self._connected.wait(), timeout=50)
                         return
                     except asyncio.TimeoutError:
                         logging.warning("[Studio] Connection task appears stuck. Restarting...")
@@ -120,8 +120,8 @@ class StudioClient:
             logging.error(f"[Studio] Tool call failed: {e}")
             raise
 
-    async def create_match(self, when: datetime.datetime, where: str) -> Any:
-        return await self.call_tool("create_match", {"when": when.isoformat(), "where": where})
+    async def create_match(self, when: str, where: str) -> Any:
+        return await self.call_tool("create_match", {"when": when, "where": where})
 
     async def edit_match(self, match_id: str, new_time: datetime.datetime) -> Any:
         return await self.call_tool("edit_match", {"id": match_id, "when": new_time.isoformat()})

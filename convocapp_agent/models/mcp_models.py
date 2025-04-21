@@ -39,3 +39,9 @@ class MCPResponse(BaseModel):
     content: str = Field(..., description="Natural language response from the agent")
     tool: Optional[ToolCall] = None
     reasoning: Optional[List[str]] = None
+
+
+class LLMClassifyResponse(BaseModel):
+    intent: int
+    tool_call: Optional[ToolCall] = None
+    response: Optional[str] = None
