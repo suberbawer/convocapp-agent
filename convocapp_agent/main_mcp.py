@@ -2,11 +2,13 @@ import json
 
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+
 from mcp.server.fastmcp import FastMCP, Context
 from mcp.types import TextContent
-from convocapp_agent.clients.studio import StudioClient, studio as studio_client
-from convocapp_agent.models.mcp_models import LLMClassifyResponse
-from model_router import call_model
+from clients.studio import StudioClient, studio as studio_client
+from models.mcp_models import LLMClassifyResponse
+from convocapp_agent.clients.llm import call_llm
+from services.match import create_match
 from prompts.prompt_builder import render_prompt
 
 load_dotenv()
@@ -17,7 +19,7 @@ async def lifespan(_server: FastMCP):
     print("LIFESPAN STARTING...")
     try:
         await studio_client.connect()
-        yield {"studio": studio_client}
+        yield
     finally:
         await studio_client.cleanup()
         print("LIFESPAN ENDED")
@@ -28,17 +30,17 @@ mcp = FastMCP("convocapp-agent", version="0.1.0", lifespan=lifespan, port=8000)
 
 # Fallback reasoning tool to classify user intent (for mcp/perform equivalent)
 @mcp.tool(
-    name="classify_action_match",
-    description="Classifies user intent and suggests tool usage",
+    name="classify_extract",
+    description="Classifies and extract user intent and suggests tool usage",
 )
-async def classify_action_match(ctx: Context, user_input: str) -> list[TextContent]:
+async def classify_extract_action_match(ctx: Context, user_input: str) -> list[TextContent]:
     prompt = render_prompt("classify_and_extract.txt.tmpl", user_input=user_input)
-    raw_response = call_model(prompt, "classify_action_match")
+    raw_response = call_llm(prompt, "classify_and_extract")
     studio: StudioClient = ctx.request_context.lifespan_context["studio"]
 
     reasoning = [
         "Analyzed user message for intent classification",
-        "Prompt used: classify_action_match.txt.tmpl",
+        "Prompt used: classify_and_extract.txt.tmpl",
         f"Model returned: {raw_response.strip()}",
     ]
 
@@ -59,6 +61,49 @@ async def classify_action_match(ctx: Context, user_input: str) -> list[TextConte
     print("Reasoning =====>", reasoning)
 
     return [TextContent(type="text", text=result)]
+
+
+@mcp.tool(
+    name="classify_action_match",
+    description="Classifies and use tool depending classification",
+)
+async def classify_action_match(ctx: Context, user_input: str) -> list[TextContent]:
+    prompt = render_prompt("classify.txt.tmpl", user_input=user_input)
+    raw_response = call_llm(prompt, "classify")
+    response = raw_response.strip()
+
+    reasoning = [
+        "Analyzed user message for intent classification",
+        "Prompt used: classify.txt.tmpl",
+        f"Model returned: {response}",
+    ]
+
+    print("Reasoning =====>", reasoning)
+
+    if response in {"1", "2", "3", "4"}:
+        intent = int(response)
+
+        if intent == 1:
+            # Create match
+            result = await create_match(user_input)
+        elif intent == 2:
+            # result = await studio.()
+            print("Intent", intent)
+        elif intent == 3:
+            # result = await studio.add_players(players=entities.get("players", []), date=entities.get("datetime"))
+            print("Intent", intent)
+        elif intent == 4:
+            print("Intent", intent)
+            # result = await studio.edit_match("abc", when)
+        else:
+            result = "Intent detected, but no handler found."
+
+        return [TextContent(type="text", text=str(result))]
+
+    raw_response = call_llm(user_input, "natural_answer")
+    response = raw_response.strip()
+
+    return [TextContent(type="text", text=response)]
 
 
 if __name__ == "__main__":

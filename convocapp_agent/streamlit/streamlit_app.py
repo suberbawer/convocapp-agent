@@ -3,8 +3,8 @@ import streamlit as st
 
 from dotenv import load_dotenv
 
-from convocapp_agent.model_router import call_model
-from convocapp_agent.prompts.prompt_builder import render_prompt
+from convocapp_agent.clients.llm import call_model
+from prompts.prompt_builder import render_prompt
 
 st.set_page_config(page_title="⚽ Match Agent Chat", layout="centered")
 
@@ -40,7 +40,7 @@ if user_input:
     # Call match-agent
     try:
         with st.spinner("Thinking..."):
-            prompt = render_prompt("classify_and_extract.txt.tmpl", user_input=user_input)
+            prompt = render_prompt("classify.txt.tmpl", user_input=user_input)
             result = call_model(prompt, "classify_action_match")
 
         st.session_state.chat_history.append({"role": "assistant", "content": result})

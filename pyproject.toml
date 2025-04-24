@@ -6,7 +6,7 @@ authors = ["Santiago Blankleider <santiago.blankleider@gmail.com>"]
 
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.13"
 fastapi = "^0.110.0"
 pydantic = "^2.5.3"
 requests = "^2.31.0"
@@ -17,6 +17,7 @@ streamlit = "^1.44.1"
 mcp = {extras = ["cli"], version = "^1.6.0"}
 fastmcp = "^0.4.1"
 aiohttp = "^3.11.16"
+deep-translator = "^1.11.4"
 
 
 [tool.poetry.group.dev.dependencies]

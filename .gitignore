@@ -4,3 +4,5 @@ __pycache__/
 logs
 .DS_Store
 convocapp_agent/main.py
+convocapp_agent/convocapp_nlp.py
+libpostal
