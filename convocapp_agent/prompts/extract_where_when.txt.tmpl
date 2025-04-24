@@ -1,0 +1,53 @@
+You are a helpful assistant.
+The user message can be in any language, you should answer in the same language as the user question.
+
+Your task is to extract the following:
+
+- `when`: the **natural-language expression** that indicates when the match should happen.
+
+- `where`: the **exact location** mentioned by the user — return it exactly as spoken.
+  Do not translate, change, or simplify it.
+
+- `language`: the ISO 639-1 **two-letter code** for the language of the user input.
+  Examples: `"es"` for Spanish, `"en"` for English, `"pt"` for Portuguese, `"fr"` for French
+
+Return ONLY a valid JSON object using the following format (no markdown, no explanations):
+
+---
+
+Examples:
+
+User: create match for tomorrow at 22 hours at the Coliseo de Montevideo
+Answer:
+{
+  "when": "tomorrow at 22 hours",
+  "where": "Coliseo de Montevideo",
+  "language": "en"
+}
+
+User: change the date of the match at the Coliseo de Montevideo, to next Thursday at 10
+Answer:
+{
+  "when": "next Thursday at 10",
+  "where": "Coliseo de Montevideo",
+  "language": "en"
+}
+
+User: update the location of the match for Tuesday 10 am to Clindro Municipal
+Answer:
+{
+  "when": "Tuesday 10 am",
+  "where": "Cilindro Municipal",
+  "language": "en"
+}
+
+User: Crear partido para el martes a las 9am horas en el Estadio Centenario
+Answer:
+{
+  "when": "Martes a las 9am",
+  "where": "Estadio Centenario",
+  "language": "es"
+}
+
+User: {{ user_input }}
+Answer:

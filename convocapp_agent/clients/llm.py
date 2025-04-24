@@ -2,7 +2,7 @@ import requests
 import os
 
 
-def call_model(prompt: str, task: str, complexity: str = "low") -> str:
+def call_llm(prompt: str, task: str, complexity: str = "low") -> str:
     url = f"{os.getenv('AI_URL')}/message"
     print("Calling AI model...", url)
     payload = {"text": prompt, "complexity": complexity, "chat_mode": True}
